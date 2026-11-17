@@ -15,6 +15,9 @@ done
 lipo -create -output "$APP/Contents/MacOS/ExplodingNerds" "$WORK/ExplodingNerds-arm64" "$WORK/ExplodingNerds-x86_64"
 
 cp -R game "$APP/Contents/Resources/"
+# Window title: "Exploding Nerds (<short commit>)".
+COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo dev)
+sed -i '' "s|<title>Exploding Nerds</title>|<title>Exploding Nerds ($COMMIT)</title>|" "$APP/Contents/Resources/game/index.html"
 
 # App icon: the Exploding Nerd card padded to a square.
 sips -s format png --padToHeightWidth 840 840 game/cards/c01.webp --out "$WORK/icon.png" >/dev/null

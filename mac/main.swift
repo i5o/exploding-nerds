@@ -52,6 +52,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
+    // The page's <title> names the commit it was built from (build.sh stamps it).
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        window.title = webView.title ?? window.title
+    }
+
     // Web links (the rules page) open in the default browser instead of replacing the game.
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction) async -> WKNavigationActionPolicy {
         guard let url = action.request.url, url.scheme == "http" || url.scheme == "https" else { return .allow }

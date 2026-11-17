@@ -15,6 +15,9 @@ mkdir -p "${OUT:h}" "$APPDIR" "$ICONS" "$WORK/zip"
 # The app itself, the same for both CPUs: shell, game, window icon, and the one runtime dependency (plain JS).
 cp package.json main.js preload.js "$APPDIR/"
 cp -R ../game "$APPDIR/"
+# Window title: "Exploding Nerds (<short commit>)". Electron's window follows the page title.
+COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo dev)
+sed -i '' "s|<title>Exploding Nerds</title>|<title>Exploding Nerds ($COMMIT)</title>|" "$APPDIR/game/index.html"
 sips -s format png --padToHeightWidth 840 840 ../game/cards/c01.webp --out "$APPDIR/icon.png" >/dev/null
 sips -z 256 256 "$APPDIR/icon.png" >/dev/null
 (cd "$APPDIR" && npm install --omit=dev --no-audit --no-fund --no-package-lock --loglevel=error && rm -rf node_modules/.bin)
