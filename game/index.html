@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exploding Nerds</title>
+<style>
+  :root {
+    --bg: #0b1220; --panel: #111a2e; --line: #24324f; --text: #e8eefc; --muted: #8d9abb;
+    --accent: #4f8cff; --danger: #ff5a3c; --ok: #35c98f;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --serif: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: radial-gradient(1100px 650px at 45% 35%, #15233f, var(--bg) 70%);
+    color: var(--text); font: 15px/1.45 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-user-select: none; user-select: none; cursor: default;
+  }
+  [hidden] { display: none !important; }
+  img { -webkit-user-drag: none; }
+  .label { font: 700 11px/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .accent { color: var(--accent); }
+  .btn {
+    font: inherit; font-weight: 600; color: var(--text); background: #1b2742; border: 1px solid #2d3d63;
+    border-radius: 10px; padding: 9px 16px; cursor: pointer; text-decoration: none; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; font-size: 17px; padding: 10px 22px; }
+  .btn.ghost { background: transparent; }
+  .btn.sm { padding: 3px 9px; }
+  input:not([type]) {
+    font: inherit; color: var(--text); background: #0f1830; border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 12px; width: 260px; -webkit-user-select: text; user-select: text;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .seg button { font: inherit; font-weight: 700; background: transparent; color: var(--text); border: 0; padding: 8px 16px; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .seg button:disabled { opacity: .35; cursor: default; }
+  .check { color: #c9d3ea; display: flex; gap: 8px; align-items: flex-start; font-size: 13px; text-align: left; }
+  .hint { color: var(--muted); font-size: 13px; margin: 0; }
+  .notice { color: #ff8a70; font-weight: 600; min-height: 1.3em; margin: 10px 0 0; }
+  .card { display: block; width: 120px; aspect-ratio: 616 / 840; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); }
+  #langs { position: fixed; top: 22px; right: 26px; z-index: 5; }
+  .screen { height: 100%; display: grid; place-items: center; }
+
+  /* start screen */
+  #start { height: 100%; display: grid; grid-template-columns: 1.25fr 1fr; align-items: center; gap: 30px; padding: 0 6vw; position: relative; }
+  #start .logo { position: absolute; top: 26px; left: 6vw; height: 26px; }
+  h1 { font-size: 72px; line-height: .95; margin: 12px 0 16px; font-weight: 900; letter-spacing: -.02em; }
+  h1 em { font-family: var(--serif); font-weight: 400; display: block; }
+  #start p.tag { color: #c9d3ea; font-size: 17px; max-width: 520px; margin: 0 0 20px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 660px; margin-bottom: 8px; }
+  .mode { background: rgba(17, 26, 46, .75); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .mode h3 { margin: 0; font-size: 16px; }
+  .fan { position: relative; height: 420px; }
+  .fan img { position: absolute; width: 210px; top: 60px; left: 50%; }
+  .fan img:nth-child(1) { transform: translateX(-118%) rotate(-11deg); }
+  .fan img:nth-child(2) { transform: translateX(-50%) translateY(-24px); z-index: 2; }
+  .fan img:nth-child(3) { transform: translateX(18%) rotate(10deg); }
+
+  /* lobby and join */
+  .box { max-width: 860px; padding: 26px 30px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 30px 80px rgba(0, 0, 0, .5); }
+  .box.wide { width: 560px; text-align: left; }
+  .box h2 { margin: 0 0 6px; font-size: 26px; }
+  .box p { margin: 0 0 16px; color: var(--muted); }
+  .box .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .box.wide .row { justify-content: flex-start; }
+  .addr { font: 700 26px/1.2 var(--mono); color: var(--text) !important; margin: 6px 0 4px !important; -webkit-user-select: text; user-select: text; }
+  .people, .servers { list-style: none; padding: 0; margin: 8px 0 14px; }
+  .people li, .servers li { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
+  .servers li b { flex: 1; }
+
+  /* table */
+  #table { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 290px; grid-template-rows: auto auto 1fr auto; }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 10px 22px; border-bottom: 1px solid var(--line); background: rgba(8, 13, 24, .55); }
+  header .logo { height: 18px; }
+  header .title { font-weight: 800; font-size: 17px; }
+  header .title em { font-family: var(--serif); font-weight: 400; }
+  @media (max-width: 1260px) { header .title { display: none; } } /* the logo is enough when the window is narrow */
+  header .grow { flex: 1; }
+  header .seg button { padding: 5px 10px; font-size: 12px; }
+  .stat { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
+  .stat b { font-size: 17px; }
+  #opponents { display: flex; justify-content: center; gap: 14px; padding: 16px 20px 4px; flex-wrap: wrap; }
+  .opp { display: flex; gap: 12px; align-items: center; min-width: 190px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+  .opp .card { width: 46px; }
+  .opp .name { font-weight: 700; }
+  .opp.turn { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 140, 255, .25); }
+  .opp.out { opacity: .5; }
+  .opp.target { cursor: pointer; border-color: var(--danger); box-shadow: 0 0 0 3px rgba(255, 90, 60, .3); }
+  .chips { display: flex; gap: 5px; margin-top: 5px; min-height: 18px; }
+  .chip { font: 700 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: #1d2a48; color: var(--muted); }
+  .chip.on { background: var(--accent); color: #fff; }
+  .chip.hot { background: var(--danger); color: #fff; }
+  #center { display: flex; align-items: center; justify-content: center; gap: 30px; min-height: 0; }
+  .pile { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .pile .card { width: 128px; }
+  #drawPile .card { filter: drop-shadow(2px 2px 0 #1a2846) drop-shadow(2px 2px 0 #22345a) drop-shadow(2px 2px 0 #1a2846) drop-shadow(0 10px 14px rgba(0, 0, 0, .5)); }
+  #drawPile.can { cursor: pointer; }
+  #drawPile.can .card { filter: drop-shadow(0 0 4px var(--accent)) drop-shadow(0 0 14px var(--accent)); }
+  .slot { width: 128px; aspect-ratio: 616 / 840; border: 2px dashed var(--line); border-radius: 12px; }
+  #stage { position: relative; width: 380px; height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  #stage .cards { display: flex; gap: 10px; animation: in .25s ease-out; }
+  #stage .card { width: 150px; }
+  #stage .cap { text-align: center; font-weight: 600; max-width: 380px; }
+  #known { width: 120px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+  #known .mini { display: flex; flex-direction: column; gap: 4px; }
+  #known .card { width: 64px; }
+  #me { padding: 4px 22px 12px; }
+  #bar { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 46px; flex-wrap: wrap; }
+  #status { font-weight: 600; }
+  #hand { display: flex; justify-content: center; align-items: flex-end; height: 200px; padding-top: 34px; }
+  #hand .card { position: relative; transition: transform .14s ease, filter .14s ease; }
+  #hand .card + .card { margin-left: var(--gap, 8px); }
+  #hand.live .card { cursor: pointer; }
+  #hand.live .card:hover { transform: translateY(-30px) scale(1.4); z-index: 10; }
+  #hand .card.sel { transform: translateY(-36px); z-index: 9; filter: drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 12px var(--accent)); }
+  #hand .card.new { animation: pop .7s ease-out; }
+  #hand .gone { display: flex; align-items: center; gap: 16px; color: var(--muted); font-weight: 600; }
+  #hand .gone .card { width: 90px; }
+  #log { grid-column: 2; grid-row: 2 / -1; overflow-y: auto; padding: 12px 16px; font-size: 13px; color: #c3cde6; border-left: 1px solid var(--line); background: rgba(8, 13, 24, .45); -webkit-user-select: text; user-select: text; }
+  #log div { padding: 4px 0; }
+  #log .turn { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font: 700 10px/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  #log .me { color: #fff; }
+  #log .bad { color: #ff8a70; font-weight: 600; }
+  .timer { width: 110px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .timer i { display: block; height: 100%; background: var(--danger); animation: drain linear forwards; }
+
+  /* modal */
+  #modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(4, 8, 16, .72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  .box .cards { display: flex; gap: 16px; justify-content: center; margin: 8px 0 18px; }
+  .box .cards .card { width: 170px; }
+  .box figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .box figcaption { display: flex; gap: 8px; align-items: center; }
+  .names { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .box input[type=range] { width: 440px; accent-color: var(--accent); }
+
+  @keyframes in { from { opacity: 0; transform: scale(.92) translateY(8px); } }
+  @keyframes pop { from { transform: translateY(-46px) scale(1.15); filter: drop-shadow(0 0 16px var(--ok)); } }
+  @keyframes drain { from { width: 100%; } to { width: 0; } }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-9px) rotate(-2deg); } 40%, 60% { transform: translateX(9px) rotate(2deg); }
+  }
+  .shake { animation: shake .7s !important; }
+  @keyframes flash { from { background: rgba(255, 90, 60, .35); } to { background: rgba(255, 90, 60, 0); } }
+  body.flash::after { content: ''; position: fixed; inset: 0; pointer-events: none; animation: flash 1s ease-out forwards; }
+  .btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* manual */
+  #manual { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--bg); }
+  #manual .bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 22px; border-bottom: 1px solid var(--line); }
+  #manual iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+
+  /* effects */
+  .flyer { position: fixed; z-index: 40; pointer-events: none; }
+  .burst { position: fixed; z-index: 45; pointer-events: none; font-size: 120px; line-height: 1; transform: translate(-50%, -50%); animation: burst .8s ease-out forwards; }
+  .burst::after { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px; border-radius: 50%; border: 6px solid var(--danger); animation: ring .7s ease-out forwards; }
+  .stamp { position: absolute; top: 38%; left: 50%; padding: 4px 18px; font: 900 64px/1 -apple-system, BlinkMacSystemFont, sans-serif; text-transform: uppercase; color: var(--danger); border: 6px solid var(--danger); border-radius: 12px; background: rgba(11, 18, 32, .7); transform: translate(-50%, -50%) rotate(-12deg); animation: stamp .35s cubic-bezier(.2, 1.6, .4, 1) both; pointer-events: none; }
+  #drawPile.riffle .card { animation: riffle .6s ease-in-out; }
+  .glow .card { animation: glow 1.1s ease-in-out; }
+  @keyframes burst { from { transform: translate(-50%, -50%) scale(.2); } 60% { opacity: 1; } to { transform: translate(-50%, -50%) scale(1.6); opacity: 0; } }
+  @keyframes ring { to { width: 280px; height: 280px; margin: -140px; border-width: 1px; opacity: 0; } }
+  @keyframes stamp { from { transform: translate(-50%, -50%) rotate(-12deg) scale(2.6); opacity: 0; } }
+  @keyframes riffle { 20%, 60% { transform: translateX(-24px) rotate(-8deg); } 40%, 80% { transform: translateX(24px) rotate(8deg); } }
+  @keyframes glow { 50% { filter: drop-shadow(0 0 14px var(--ok)) drop-shadow(0 0 28px var(--ok)); } }
+</style>
+</head>
+<body>
+
+<div class="seg" id="langs"><button data-lang="en">EN</button><button data-lang="es">ES</button></div>
+
+<div id="start">
+  <img class="logo" src="logo.svg" alt="Dualboot Partners">
+  <div>
+    <div class="label accent" data-t="edition"></div>
+    <h1>Exploding <em>Nerds</em></h1>
+    <p class="tag" data-t="tagline"></p>
+    <label class="field"><span class="label" data-t="yourName"></span><input id="name" maxlength="20" spellcheck="false"></label>
+    <div class="modes">
+      <section class="mode">
+        <h3 data-t="solo"></h3>
+        <span class="label" data-t="opponents"></span>
+        <div class="seg" id="seats"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3" class="on">3</button><button data-n="4">4</button><button data-n="5">5</button></div>
+        <label class="check"><input type="checkbox" id="fast"><span data-t="fast"></span></label>
+        <button class="btn primary" id="deal" data-t="deal"></button>
+      </section>
+      <section class="mode">
+        <h3 data-t="lan"></h3>
+        <button class="btn primary" id="hostBtn" data-t="host"></button>
+        <button class="btn" id="joinBtn" data-t="join"></button>
+        <p class="hint" id="appHint" data-t="needApp"></p>
+      </section>
+    </div>
+    <button class="btn ghost" data-manual data-t="rules"></button>
+    <p class="notice" id="notice"></p>
+  </div>
+  <div class="fan"><img class="card" src="cards/c79.webp" alt=""><img class="card" src="cards/c01.webp" alt=""><img class="card" src="cards/c05.webp" alt=""></div>
+</div>
+
+<div id="lobby" class="screen" hidden><div class="box wide" id="lobbyBox"></div></div>
+
+<div id="join" class="screen" hidden>
+  <div class="box wide">
+    <h2 data-t="pickServer"></h2>
+    <div id="serverList"></div>
+    <span class="label" data-t="orIp"></span>
+    <div class="row"><input id="ip" placeholder="192.168.1.20" spellcheck="false"><button class="btn" id="ipJoin" data-t="joinBtn"></button></div>
+    <p class="notice" id="joinNotice"></p>
+    <div class="row"><button class="btn ghost" id="joinBack" data-t="back"></button></div>
+  </div>
+</div>
+
+<div id="table" hidden>
+  <header>
+    <img class="logo" src="logo.svg" alt="Dualboot Partners">
+    <span class="title">Exploding <em>Nerds</em></span>
+    <span class="grow"></span>
+    <div class="stat"><span class="label" data-t="risk"></span><b id="risk"></b></div>
+    <div class="stat"><span class="label" data-t="nerdsLeft"></span><b id="nerds"></b></div>
+    <div class="stat"><span class="label" data-t="order"></span><b id="dir"></b></div>
+    <div class="seg"><button data-lang="en">EN</button><button data-lang="es">ES</button></div>
+    <button class="btn ghost" id="soundBtn"></button>
+    <button class="btn ghost" id="autoBtn" data-t="autoplay"></button>
+    <button class="btn ghost" data-manual data-t="rulesShort"></button>
+    <button class="btn ghost" id="menu"></button>
+  </header>
+  <section id="opponents"></section>
+  <section id="center">
+    <div class="pile" id="drawPile"><img class="card" src="cards/c79.webp" alt=""><span class="label"><span data-t="drawPile"></span> · <b id="pileCount"></b></span></div>
+    <div class="pile"><div id="discardTop"></div><span class="label" data-t="discard"></span></div>
+    <div id="stage"></div>
+    <div id="known"></div>
+  </section>
+  <section id="me">
+    <div id="bar"></div>
+    <div id="hand"></div>
+  </section>
+  <aside id="log"></aside>
+</div>
+
+<div id="manual" hidden>
+  <div class="bar"><span class="label" data-t="edition"></span><button class="btn" id="manualClose" data-t="close"></button></div>
+  <iframe id="manualFrame" title="Manual"></iframe>
+</div>
+
+<div id="modal" hidden></div>
+
+<script src="engine.js"></script>
+<script>
+'use strict';
+const { TYPES, typeOf, newGame, run, playKind, bot, view, redact, sanitize, nextAlive } = Engine;
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+const native = () => window.webkit?.messageHandlers?.net; // only inside the Mac app
+const store = {
+  get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+};
+const PORT = 47800;
+const MAX_PLAYERS = 6;
+const BOTS = ['Senior Dev', 'DevOps', 'QA', 'Tech Lead', 'Intern'];
+const NOPE_MS = 5000;
+
+// ---- strings ----
+
+const ES_CARDS = {
+  defuse: 'Desactivar', attack: 'Ataque', targeted: 'Ataque dirigido', skip: 'Saltar', reverse: 'Reversa',
+  bottom: 'Robar de abajo', future: 'Ver el futuro', alter: 'Alterar el futuro', shuffle: 'Mezclar',
+  swap: 'Cambiar arriba y abajo', curse: 'Maldición del código',
+};
+// Log lines get s = { you, name } for each player they mention.
+const L = {
+  en: {
+    edition: 'The rules · Software factory edition',
+    tagline: "A card game about servers on fire, Friday deploys and the colleague who keeps stealing your HDMI cable. Draw cards until someone explodes. Don't be that someone.",
+    yourName: 'Your name', defaultName: 'Player',
+    solo: 'Against the computer', opponents: 'Computer opponents', deal: 'Deal the cards',
+    fast: 'Faster game: remove a third of the deck (best for 2–3 players)',
+    lan: 'On the local network', host: 'Host a game', join: 'Join a game',
+    needApp: 'Hosting and finding games need the Mac app.',
+    rules: 'Read the rules', rulesShort: 'Rules', close: 'Close', menu: 'Menu', endGame: 'End game',
+    needName: 'Type your name first.', autoplay: 'Autoplay', autoOn: 'Autoplay is on: the computer plays for you.', sound: 'Sound',
+    risk: 'Explosion risk', nerdsLeft: 'Nerds left', order: 'Play order', drawPile: 'Draw pile', discard: 'Discard',
+    knowTop: 'You know the top',
+    cards: n => `${n} card${n === 1 ? '' : 's'}`, turn: 'Turn', turns: n => `${n} turns`,
+    cursed: 'Cursed', exploded: 'Exploded', out: 'Out', youExploded: 'You exploded.',
+    thinking: name => `${name} is thinking…`, yourTurn: 'Your turn.', turnsToTake: n => `${n} turns to take`,
+    pickCard: 'Pick a card to play', cantPlay: "That card can't be played now", noTarget: 'Nobody to target',
+    playPair: 'Play pair: steal a random card', playTriple: 'Play three: name a card', play: card => `Play ${card}`,
+    draw: 'Draw a card', cursedBar: "You're cursed: your cards stay face down until you draw.", flip: 'Flip a random card',
+    target: { targeted: 'Who takes the 2 turns?', favor: 'Who owes you a Favor?', curse: 'Who gets cursed?', pair: 'Steal a random card from…', triple: 'Ask who for a card?' },
+    yourself: 'Yourself', cancel: 'Cancel', nopeBtn: 'Nope!', letGo: 'Let it go',
+    nopedQ: what => `${what} got Noped. Put it back on?`,
+    favorAsk: name => `${name} asked you for a Favor. Click the card you'll give.`,
+    first: s => (s.you ? 'You go first.' : `${s.name} goes first.`),
+    turnOf: (s, n) => (s.you ? 'Your turn' : `${s.name}'s turn`) + (n > 1 ? ` · ${n} turns` : ''),
+    played: (s, what) => `${s.you ? 'You' : s.name} played ${what}.`,
+    noped: s => `${s.you ? 'You' : s.name}: Nope!`,
+    yup: s => `${s.you ? 'You' : s.name} Noped the Nope. It's back on!`,
+    attacked: (s, n) => `${s.you ? 'You have' : `${s.name} has`} to take ${n} turns.`,
+    drewYou: (card, bottom) => `You drew ${card}${bottom ? ' from the bottom' : ''}.`,
+    drew: (s, bottom) => `${s.name} drew a card${bottom ? ' from the bottom' : ''}.`,
+    drewNerd: s => `${s.you ? 'You' : s.name} drew an Exploding Nerd!`,
+    lost: (s, card) => `${s.you ? 'You' : s.name} flipped ${card}. Wasted.`,
+    defused: s => `${s.you ? 'You' : s.name} defused it!`,
+    putBackYou: where => `You put the Exploding Nerd back ${where}.`,
+    putBack: s => `${s.name} slipped the Exploding Nerd back into the pile.`,
+    boom: s => `${s.you ? 'You' : s.name} exploded.`,
+    aCard: 'a card',
+    gave: (from, to, what) => `${from.you ? 'You' : from.name} gave ${to.you ? 'you' : to.name} ${what}.`,
+    stole: (to, from, what) => `${to.you ? 'You' : to.name} stole ${what} from ${from.you ? 'you' : from.name}.`,
+    handed: (from, card) => `${from.you ? 'You' : from.name} had to hand over ${card}.`,
+    hadNone: (from, card) => `${from.you ? 'You' : from.name} had no ${card}.`,
+    cursedLog: s => (s.you ? 'You are cursed: your cards stay face down until you draw.' : `${s.name} is cursed until they draw.`),
+    wins: s => (s.you ? 'You win!' : `${s.name} wins.`),
+    winTag: "Enjoy it. It's the only green build you'll see this week.",
+    loseTag: 'And your commit history will be reviewed by everyone.',
+    broke: m => `Something broke: ${m}`,
+    obj: (s, self) => (self ? (s.you ? 'yourself' : 'themselves') : s.you ? 'you' : s.name),
+    pairOf: (card, who) => `a ${card} pair to steal from ${who}`,
+    threeOf: (card, who, named) => `three ${card} to ask ${who} for their ${named}`,
+    aimed: (card, who) => `${card} on ${who}`,
+    futureText: 'The top of the Draw Pile. The left card is drawn next. Keep it to yourself.', gotIt: 'Got it',
+    alterText: 'Put the top cards in any order. The left card is drawn next.', done: 'Done',
+    ord: ['Top', '2nd', '3rd'],
+    defusedTitle: 'Defused!',
+    defuseText: n => `Secretly put the Exploding Nerd back into the Draw Pile (${n} cards). Nobody else will know where.`,
+    spots: ['Top', '2nd', 'Middle', 'Random', 'Bottom'], putItBack: 'Put it back',
+    where: (pos, size) => (pos === 0 ? 'on top' : pos >= size ? 'at the bottom' : `${pos} card${pos > 1 ? 's' : ''} from the top`),
+    nameTitle: 'Name a card',
+    nameText: 'If they have one, they have to hand it over. Asking for their Defuse is always a strong opening line.',
+    watch: 'Watch the rest', newGame: 'New game', again: 'Play again',
+    hostingOn: 'Hosting on', port: p => `Port ${p}`,
+    hostHint: 'Other players pick this server under Join a game, or type this IP.',
+    starting: 'Starting the server…', hostFailed: m => `Couldn't start the server: ${m}`,
+    players: n => `Players (${n}/5)`, youHost: 'you, host', bots: 'Computer players',
+    start: 'Start game', needTwo: 'Need at least 2 players', stopHosting: 'Stop hosting', toLobby: 'Back to lobby',
+    pickServer: 'Pick a server', searching: 'Looking for games on this network…',
+    noBrowse: "Finding servers needs the Mac app. Type the host's IP instead.",
+    orIp: 'Or type the host IP', joinBtn: 'Join', back: 'Back',
+    connecting: addr => `Connecting to ${addr}…`, connectedTo: name => `Connected to ${name}`,
+    waitingHost: 'Waiting for the host to start the game…', waitNext: 'Waiting for the host to start another game…',
+    leave: 'Leave', badAddr: addr => `"${addr}" isn't an IP or host name.`,
+    cantConnect: addr => `Couldn't connect to ${addr}.`, hostLeft: 'The host ended the game.',
+    rejected: 'That game is full or already started.',
+    leftGame: name => `${name} left. The computer plays for them now.`,
+  },
+  es: {
+    edition: 'Reglamento · Edición Software Factory',
+    tagline: 'Un juego de cartas sobre servidores prendidos fuego, deploys un viernes y ese compañero que te sigue robando el cable HDMI. Robá cartas hasta que alguien explote. No seas vos.',
+    yourName: 'Tu nombre', defaultName: 'Jugador',
+    solo: 'Contra la computadora', opponents: 'Rivales de la computadora', deal: 'Repartir',
+    fast: 'Partida rápida: sacá un tercio del mazo (ideal para 2–3 jugadores)',
+    lan: 'En la red local', host: 'Crear partida (ser servidor)', join: 'Unirse a una partida',
+    needApp: 'Para ser servidor o buscar partidas necesitás la app de Mac.',
+    rules: 'Leer el reglamento', rulesShort: 'Reglas', close: 'Cerrar', menu: 'Menú', endGame: 'Terminar partida',
+    needName: 'Primero escribí tu nombre.', autoplay: 'Piloto automático', autoOn: 'Piloto automático: la computadora juega por vos.', sound: 'Sonido',
+    risk: 'Riesgo de explosión', nerdsLeft: 'Nerds en el mazo', order: 'Sentido', drawPile: 'Mazo', discard: 'Descarte',
+    knowTop: 'Sabés lo que hay arriba',
+    cards: n => `${n} carta${n === 1 ? '' : 's'}`, turn: 'Turno', turns: n => `${n} turnos`,
+    cursed: 'Maldito', exploded: 'Explotó', out: 'Afuera', youExploded: 'Explotaste.',
+    thinking: name => `${name} está pensando…`, yourTurn: 'Tu turno.', turnsToTake: n => `${n} turnos por jugar`,
+    pickCard: 'Elegí una carta para jugar', cantPlay: 'Esa carta no se puede jugar ahora', noTarget: 'No hay a quién apuntarle',
+    playPair: 'Jugar par: robar una carta al azar', playTriple: 'Jugar tres: pedir una carta', play: card => `Jugar ${card}`,
+    draw: 'Robar una carta', cursedBar: 'Estás maldito: tus cartas quedan boca abajo hasta que robes.', flip: 'Dar vuelta una carta al azar',
+    target: { targeted: '¿Quién juega los 2 turnos?', favor: '¿Quién te debe un Favor?', curse: '¿A quién maldecís?', pair: 'Robarle una carta al azar a…', triple: '¿A quién le pedís una carta?' },
+    yourself: 'Vos mismo', cancel: 'Cancelar', nopeBtn: '¡Nope!', letGo: 'Dejarlo pasar',
+    nopedQ: what => `${what}: le hicieron Nope. ¿Lo volvés a activar?`,
+    favorAsk: name => `${name} te pidió un Favor. Hacé clic en la carta que le vas a dar.`,
+    first: s => (s.you ? 'Empezás vos.' : `Empieza ${s.name}.`),
+    turnOf: (s, n) => (s.you ? 'Tu turno' : `Turno de ${s.name}`) + (n > 1 ? ` · ${n} turnos` : ''),
+    played: (s, what) => (s.you ? `Jugaste ${what}.` : `${s.name} jugó ${what}.`),
+    noped: s => `${s.you ? 'Vos' : s.name}: ¡Nope!`,
+    yup: s => `${s.you ? 'Le hiciste' : `${s.name} le hizo`} Nope al Nope. ¡Vuelve a valer!`,
+    attacked: (s, n) => (s.you ? `Tenés que jugar ${n} turnos.` : `${s.name} tiene que jugar ${n} turnos.`),
+    drewYou: (card, bottom) => `Robaste ${card}${bottom ? ' de abajo' : ''}.`,
+    drew: (s, bottom) => `${s.name} robó una carta${bottom ? ' de abajo' : ''}.`,
+    drewNerd: s => (s.you ? '¡Robaste un Exploding Nerd!' : `¡${s.name} robó un Exploding Nerd!`),
+    lost: (s, card) => (s.you ? `Diste vuelta ${card}. Perdida.` : `${s.name} dio vuelta ${card}. Perdida.`),
+    defused: s => (s.you ? '¡Lo desactivaste!' : `¡${s.name} lo desactivó!`),
+    putBackYou: where => `Volviste a meter el Exploding Nerd ${where}.`,
+    putBack: s => `${s.name} volvió a meter el Exploding Nerd en el mazo.`,
+    boom: s => (s.you ? 'Explotaste.' : `${s.name} explotó.`),
+    aCard: 'una carta',
+    gave: (from, to, what) => (from.you ? `Le diste ${what} a ${to.name}.` : to.you ? `${from.name} te dio ${what}.` : `${from.name} le dio ${what} a ${to.name}.`),
+    stole: (to, from, what) => (to.you ? `Le robaste ${what} a ${from.name}.` : from.you ? `${to.name} te robó ${what}.` : `${to.name} le robó ${what} a ${from.name}.`),
+    handed: (from, card) => (from.you ? `Tuviste que entregar ${card}.` : `${from.name} tuvo que entregar ${card}.`),
+    hadNone: (from, card) => (from.you ? `No tenías ${card}.` : `${from.name} no tenía ${card}.`),
+    cursedLog: s => (s.you ? 'Estás maldito: tus cartas quedan boca abajo hasta que robes.' : `${s.name} está maldito hasta que robe.`),
+    wins: s => (s.you ? '¡Ganaste!' : `${s.name} ganó.`),
+    winTag: 'Disfrutalo. Es el único build en verde que vas a ver esta semana.',
+    loseTag: 'Y todo el mundo va a revisar tu historial de commits.',
+    broke: m => `Algo se rompió: ${m}`,
+    obj: (s, self) => (self ? (s.you ? 'vos mismo' : 'sí mismo') : s.you ? 'vos' : s.name),
+    pairOf: (card, who) => `un par de ${card} para robarle a ${who}`,
+    threeOf: (card, who, named) => `tres ${card} para pedirle ${named} a ${who}`,
+    aimed: (card, who) => `${card} a ${who}`,
+    futureText: 'Lo de arriba del mazo. La carta de la izquierda es la próxima. No se lo muestres a nadie.', gotIt: 'Entendido',
+    alterText: 'Ordená las cartas de arriba como quieras. La de la izquierda es la próxima.', done: 'Listo',
+    ord: ['Arriba', '2.ª', '3.ª'],
+    defusedTitle: '¡Desactivado!',
+    defuseText: n => `Volvé a meter el Exploding Nerd en el mazo (${n} cartas), en secreto. Nadie más va a saber dónde.`,
+    spots: ['Arriba', '2.ª', 'Al medio', 'Al azar', 'Abajo'], putItBack: 'Meterlo',
+    where: (pos, size) => (pos === 0 ? 'arriba de todo' : pos >= size ? 'abajo de todo' : `a ${pos} carta${pos > 1 ? 's' : ''} de arriba`),
+    nameTitle: 'Pedí una carta',
+    nameText: 'Si la tiene, te la tiene que dar. Pedirle el Desactivar siempre es una buena forma de arrancar.',
+    watch: 'Mirar el resto', newGame: 'Nueva partida', again: 'Jugar de nuevo',
+    hostingOn: 'Servidor en', port: p => `Puerto ${p}`,
+    hostHint: 'Los demás eligen este servidor en Unirse a una partida, o escriben esta IP.',
+    starting: 'Iniciando el servidor…', hostFailed: m => `No se pudo iniciar el servidor: ${m}`,
+    players: n => `Jugadores (${n}/5)`, youHost: 'vos, servidor', bots: 'Jugadores de la computadora',
+    start: 'Empezar la partida', needTwo: 'Se necesitan al menos 2 jugadores', stopHosting: 'Dejar de ser servidor', toLobby: 'Volver a la sala',
+    pickServer: 'Elegí un servidor', searching: 'Buscando partidas en esta red…',
+    noBrowse: 'Para buscar servidores necesitás la app de Mac. Escribí la IP del servidor.',
+    orIp: 'O escribí la IP del servidor', joinBtn: 'Unirse', back: 'Volver',
+    connecting: addr => `Conectando a ${addr}…`, connectedTo: name => `Conectado a ${name}`,
+    waitingHost: 'Esperando que el servidor empiece la partida…', waitNext: 'Esperando que el servidor arranque otra partida…',
+    leave: 'Salir', badAddr: addr => `"${addr}" no es una IP ni un nombre de equipo.`,
+    cantConnect: addr => `No se pudo conectar a ${addr}.`, hostLeft: 'El servidor terminó la partida.',
+    rejected: 'Esa partida está llena o ya empezó.',
+    leftGame: name => `${name} se fue. Ahora juega la computadora por esa persona.`,
+  },
+};
+
+let lang = store.get('lang') || (navigator.language.startsWith('es') ? 'es' : 'en');
+const t = (k, ...a) => {
+  const v = L[lang][k] ?? L.en[k];
+  return typeof v === 'function' ? v(...a) : v;
+};
+const cardName = type => (lang === 'es' && ES_CARDS[type]) || TYPES[type][0];
+const nameOf = id => cardName(typeOf(id));
+
+// ---- state ----
+
+let mode = null;       // 'solo' | 'host' | 'client'
+let V = null;          // this screen's view of the game (Engine.view)
+let pending = null;    // decision this screen's player is being asked for
+let selected = [];     // cards picked in hand
+let lastDrawn = null;  // card to highlight in hand
+let fast = false;
+let soloBots = 3;
+let g = null;          // engine state, solo and host only
+let seats = [];        // solo and host: [{ name, kind: 'local' | 'remote' | 'bot', cid }]
+let hostInfo = null;   // host: { name, ip, port } or { error }
+let lobby = [];        // host: remote players waiting [{ cid, name }]
+let lobbyBots = 1;
+const remoteAsks = new Map(); // host: ask id -> { resolve, s, pi, kind, ctx }
+let askSeq = 0;
+let ws = null;         // client: socket to the host
+let client = null;     // client: { addr, host, players, connected, again }
+const cancelled = new Set();
+let servers = [];      // join screen: [{ name, ip, port }]
+let autoplay = false;  // the computer plays this screen's seat
+let lastAct = null;    // last card play, so the Attack animation knows which card to throw
+
+const S = i => ({ you: i === V.you, name: V.players[i].name });
+const card = (id, cls = '', attrs = '') =>
+  `<img class="card ${cls}" ${attrs} src="cards/c${id ? String(id).padStart(2, '0') : '79'}.webp" alt="${id ? esc(nameOf(id)) : ''}">`;
+const cleanName = s => String(s ?? '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 20);
+const myName = () => cleanName($('#name').value) || t('defaultName');
+
+// ---- screens ----
+
+function showScreen(id) {
+  for (const s of ['start', 'lobby', 'join', 'table']) $(`#${s}`).hidden = s !== id;
+  $('#langs').hidden = id === 'table';
+  $('#modal').hidden = true;
+}
+
+function toMenu(notice = '') {
+  if (mode === 'host') {
+    native()?.postMessage({ cmd: 'stop' });
+    hostInfo = null;
+    lobby = [];
+    remoteAsks.clear();
+  }
+  if (ws) {
+    const sock = ws;
+    ws = null;
+    sock.close();
+  }
+  native()?.postMessage({ cmd: 'stopBrowse' });
+  mode = null;
+  g = null;
+  V = null;
+  pending = null;
+  autoplay = false;
+  $('#notice').textContent = notice;
+  $('#fast').checked = fast;
+  showScreen('start');
+}
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  for (const el of $$('[data-t]')) el.textContent = t(el.dataset.t);
+  for (const b of $$('[data-lang]')) b.classList.toggle('on', b.dataset.lang === lang);
+  $('#name').placeholder = t('defaultName');
+  $('#hostBtn').disabled = !native();
+  $('#appHint').hidden = !!native();
+  paintSound();
+  if (mode === 'host' || mode === 'client') renderLobby();
+  renderServers();
+  render();
+}
+
+// Every mode needs a name, so the other players can tell who is who.
+function needName() {
+  if (cleanName($('#name').value)) return false;
+  const f = $('#name');
+  $('#notice').textContent = t('needName');
+  f.focus();
+  f.classList.remove('shake');
+  void f.offsetWidth; // restart the animation
+  f.classList.add('shake');
+  return true;
+}
+
+// The rules ship with the app as PDFs printed from the official rules page.
+function openManual() {
+  const f = $('#manualFrame');
+  const src = `manual-${lang}.pdf`;
+  if (f.getAttribute('src') !== src) f.src = src;
+  $('#manual').hidden = false;
+}
+
+// ---- solo and host: the engine runs here ----
+
+function startSolo() {
+  mode = 'solo';
+  startGame([{ name: myName(), kind: 'local' }, ...BOTS.slice(0, soloBots).map(name => ({ name, kind: 'bot' }))]);
+}
+
+function startGame(list) {
+  seats = list;
+  const me = seats.findIndex(s => s.kind === 'local');
+  const game = (g = newGame(seats.map(s => s.name), fast));
+  remoteAsks.clear();
+  V = view(game, me);
+  seats.forEach((s, i) => s.kind === 'remote' && send(s.cid, { t: 'start', view: view(game, i) }));
+  resetTable();
+  run(game, makeIO(game, me)).catch(e => {
+    if (e.message === 'stale') return;
+    console.error(e);
+    log(t('broke', e.message), 'bad');
+  });
+}
+
+function resetTable() {
+  pending = null;
+  selected = [];
+  lastDrawn = null;
+  cancelled.clear();
+  $('#log').innerHTML = '';
+  $('#stage').innerHTML = '';
+  showScreen('table');
+  log(t('first', S(V.cur)));
+  render();
+}
+
+// Bridges the engine to local, remote and computer players. Leaving a game makes it 'stale' and stops it.
+function makeIO(game, me) {
+  const live = () => { if (g !== game) throw new Error('stale'); };
+  return {
+    async decide(pi, kind, ctx) {
+      live();
+      const s = seats[pi];
+      if (s.kind === 'bot' || s.auto || (s.kind === 'local' && autoplay)) {
+        if (kind === 'move') await sleep(600);
+        live();
+        return bot(game, pi, kind, ctx);
+      }
+      if (s.kind === 'local') V = view(game, me);
+      const v = await (s.kind === 'remote' ? askRemote(s, pi, kind, ctx) : ask(kind, ctx));
+      live();
+      return sanitize(game, pi, kind, ctx, v);
+    },
+    async event(type, d) {
+      live();
+      closeAsks(true); // any event means the Nope window is over
+      seats.forEach((s, i) => s.kind === 'remote' && send(s.cid, { t: 'event', type, d: redact(type, d, i), view: view(game, i) }));
+      V = view(game, me);
+      await show(type, redact(type, d, me));
+      live();
+    },
+  };
+}
+
+// Autoplay hands this screen's seat to the computer. For a joined player the host does the playing.
+function setAutoplay(on) {
+  autoplay = on;
+  if (mode === 'client') {
+    if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ t: 'auto', on }));
+  } else if (on && pending && g) {
+    pending.done(bot(g, V.you, pending.kind, pending.ctx));
+  }
+  render();
+}
+
+function askRemote(s, pi, kind, ctx) {
+  return new Promise(resolve => {
+    const id = ++askSeq;
+    remoteAsks.set(id, { resolve, s, pi, kind, ctx });
+    send(s.cid, { t: 'ask', id, kind, ctx, view: view(g, pi) });
+  });
+}
+
+// Withdraws open questions: just the Nope ones, or all of them when the game is abandoned.
+function closeAsks(nopeOnly) {
+  if (pending && (!nopeOnly || pending.kind === 'nope')) pending.done(nopeOnly ? false : null);
+  for (const [id, a] of remoteAsks) {
+    if (nopeOnly && a.kind !== 'nope') continue;
+    remoteAsks.delete(id);
+    send(a.s.cid, { t: 'cancel', id });
+    a.resolve(false);
+  }
+}
+
+// ---- hosting: the Mac app runs the WebSocket server and calls window.Net ----
+
+const send = (cid, msg) => native()?.postMessage({ cmd: 'send', to: cid, data: JSON.stringify(msg) });
+const lobbyNames = () => [myName(), ...lobby.map(c => c.name), ...BOTS.slice(0, lobbyBots)];
+const broadcastLobby = () => lobby.forEach(c => send(c.cid, { t: 'lobby', host: hostInfo?.name || '', players: lobbyNames() }));
+
+function startHosting() {
+  if (!native()) return;
+  mode = 'host';
+  hostInfo = null;
+  lobby = [];
+  showScreen('lobby');
+  renderLobby();
+  native().postMessage({ cmd: 'host' });
+}
+
+function hostStart() {
+  startGame([
+    { name: myName(), kind: 'local' },
+    ...lobby.map(c => ({ name: c.name, kind: 'remote', cid: c.cid, auto: c.auto })),
+    ...BOTS.slice(0, lobbyBots).map(name => ({ name, kind: 'bot' })),
+  ]);
+}
+
+function backToLobby() {
+  closeAsks(false); // remote clients are stuck on an open question until it's withdrawn
+  g = null;
+  V = null;
+  pending = null;
+  showScreen('lobby');
+  renderLobby();
+  broadcastLobby();
+}
+
+function uniqueName(name) {
+  const taken = new Set(lobbyNames());
+  const base = name || t('defaultName');
+  let n = base;
+  for (let k = 2; taken.has(n); k++) n = `${base} ${k}`;
+  return n;
+}
+
+// The computer answers a joined player's open questions: they left, or switched on autoplay.
+function botTakesOver(s) {
+  for (const [id, a] of remoteAsks) {
+    if (a.s !== s) continue;
+    remoteAsks.delete(id);
+    send(s.cid, { t: 'cancel', id });
+    a.resolve(bot(g, a.pi, a.kind, a.ctx));
+  }
+}
+
+window.Net = {
+  hosting(info) {
+    hostInfo = info;
+    renderLobby();
+  },
+  data(cid, text) {
+    if (mode !== 'host') return;
+    let m;
+    try { m = JSON.parse(text); } catch { return; }
+    if (m.t === 'join') {
+      const playing = g && g.winner == null;
+      if (playing || 1 + lobby.length >= MAX_PLAYERS || lobby.some(c => c.cid === cid)) return send(cid, { t: 'error' });
+      lobby.push({ cid, name: uniqueName(cleanName(m.name)) });
+      lobbyBots = Math.min(lobbyBots, MAX_PLAYERS - 1 - lobby.length);
+      broadcastLobby();
+      renderLobby();
+    } else if (m.t === 'answer') {
+      const a = remoteAsks.get(m.id);
+      if (!a || a.s.cid !== cid) return;
+      remoteAsks.delete(m.id);
+      a.resolve(m.value);
+    } else if (m.t === 'auto') {
+      const c = lobby.find(x => x.cid === cid);
+      if (c) c.auto = !!m.on;
+      const s = seats.find(x => x.kind === 'remote' && x.cid === cid);
+      if (!s) return;
+      s.auto = !!m.on;
+      if (s.auto && g) botTakesOver(s);
+    }
+  },
+  closed(cid) {
+    if (mode !== 'host') return;
+    lobby = lobby.filter(c => c.cid !== cid);
+    const s = seats.find(x => x.kind === 'remote' && x.cid === cid);
+    if (s && g) {
+      s.kind = 'bot';
+      log(t('leftGame', s.name), 'bad');
+      botTakesOver(s);
+    }
+    if (!g || g.winner != null) {
+      broadcastLobby();
+      renderLobby();
+    }
+  },
+  servers(list) {
+    servers = list;
+    renderServers();
+  },
+};
+
+function renderLobby() {
+  const box = $('#lobbyBox');
+  if (mode === 'host') {
+    const total = 1 + lobby.length + lobbyBots;
+    const ready = hostInfo && !hostInfo.error;
+    box.innerHTML = `
+      <span class="label">${t('hostingOn')}</span>
+      <h2>${esc(hostInfo?.name || '…')}</h2>
+      ${ready ? `<p class="addr">${esc(hostInfo.ip)}</p><p>${t('port', hostInfo.port)} · ${t('hostHint')}</p>`
+        : `<p class="notice">${esc(hostInfo?.error ? t('hostFailed', hostInfo.error) : t('starting'))}</p>`}
+      <span class="label">${t('players', total)}</span>
+      <ul class="people">
+        <li>${esc(myName())} <span class="label">${t('youHost')}</span></li>
+        ${lobby.map(c => `<li>${esc(c.name)}</li>`).join('')}
+        ${BOTS.slice(0, lobbyBots).map(n => `<li>${esc(n)} <span class="label">bot</span></li>`).join('')}
+      </ul>
+      <div class="row"><span class="label">${t('bots')}</span><div class="seg">${[...Array(MAX_PLAYERS).keys()]
+        .map(n => `<button data-bots="${n}" class="${n === lobbyBots ? 'on' : ''}" ${1 + lobby.length + n > MAX_PLAYERS ? 'disabled' : ''}>${n}</button>`)
+        .join('')}</div></div>
+      <div class="row"><label class="check"><input type="checkbox" id="lobbyFast" ${fast ? 'checked' : ''}>${t('fast')}</label></div>
+      <div class="row">
+        <button class="btn primary" data-act="start" ${total < 2 || !ready ? 'disabled' : ''}>${t(total < 2 ? 'needTwo' : 'start')}</button>
+        <button class="btn ghost" data-act="leave">${t('stopHosting')}</button>
+      </div>`;
+  } else if (mode === 'client') {
+    box.innerHTML = `
+      <span class="label">${esc(client.connected ? t('connectedTo', client.host || client.addr) : t('connecting', client.addr))}</span>
+      <h2>${t(client.again ? 'waitNext' : 'waitingHost')}</h2>
+      <ul class="people">${client.players.map(n => `<li>${esc(n)}</li>`).join('')}</ul>
+      <div class="row"><button class="btn ghost" data-act="leave">${t('leave')}</button></div>`;
+  }
+}
+
+// ---- joining: the client only renders views and answers questions from the host ----
+
+function openJoin() {
+  servers = [];
+  $('#ip').value = store.get('ip') || '';
+  $('#joinNotice').textContent = '';
+  showScreen('join');
+  renderServers();
+  native()?.postMessage({ cmd: 'browse' });
+}
+
+function renderServers() {
+  const box = $('#serverList');
+  if (!native()) box.innerHTML = `<p class="hint">${t('noBrowse')}</p>`;
+  else if (!servers.length) box.innerHTML = `<p class="hint">${t('searching')}</p>`;
+  else {
+    box.innerHTML = `<ul class="servers">${servers
+      .map((s, i) => `<li><b>${esc(s.name)}</b><span class="label">${esc(s.ip)}</span><button class="btn primary" data-server="${i}">${t('joinBtn')}</button></li>`)
+      .join('')}</ul>`;
+  }
+}
+
+function joinServer(input) {
+  const addr = input.trim();
+  let sock;
+  try {
+    if (!/^[\w.-]+(:\d{1,5})?$/.test(addr)) throw new Error('bad address');
+    sock = new WebSocket(`ws://${addr.includes(':') ? addr : `${addr}:${PORT}`}`); // throws on e.g. port 99999
+  } catch {
+    $('#joinNotice').textContent = t('badAddr', addr);
+    return;
+  }
+  ws = sock;
+  store.set('ip', addr);
+  native()?.postMessage({ cmd: 'stopBrowse' });
+  mode = 'client';
+  client = { addr, host: '', players: [], connected: false, again: false };
+  showScreen('lobby');
+  renderLobby();
+  let chain = Promise.resolve();
+  sock.onopen = () => {
+    client.connected = true;
+    sock.send(JSON.stringify({ t: 'join', name: myName() }));
+    renderLobby();
+  };
+  sock.onmessage = e => {
+    let m;
+    try { m = JSON.parse(e.data); } catch { return; }
+    if (m.t === 'cancel') return cancelAsk(m.id);
+    chain = chain.then(() => onHost(m, sock)).catch(err => err.message === 'stale' || console.error(err));
+  };
+  sock.onclose = () => {
+    if (ws !== sock) return; // we left on purpose
+    ws = null;
+    toMenu(client.connected ? t('hostLeft') : t('cantConnect', addr));
+  };
+}
+
+async function onHost(m, sock) {
+  if (ws !== sock) throw new Error('stale');
+  switch (m.t) {
+    case 'lobby':
+      client.host = m.host;
+      client.players = m.players;
+      if (V) client.again = true;
+      V = null;
+      pending = null;
+      showScreen('lobby');
+      renderLobby();
+      return;
+    case 'error':
+      ws = null;
+      sock.close();
+      toMenu(t('rejected'));
+      return;
+    case 'start':
+      V = m.view;
+      resetTable();
+      return;
+    case 'event':
+      V = m.view;
+      return show(m.type, m.d);
+    case 'ask': {
+      if (cancelled.has(m.id)) return;
+      V = m.view;
+      const value = await ask(m.kind, m.ctx, m.id);
+      if (!cancelled.has(m.id) && ws === sock) sock.send(JSON.stringify({ t: 'answer', id: m.id, value }));
+    }
+  }
+}
+
+function cancelAsk(id) {
+  cancelled.add(id);
+  if (pending?.id === id) pending.done(false);
+}
+
+// ---- asking this screen's player ----
+
+function ask(kind, ctx = {}, id = null) {
+  return new Promise(resolve => {
+    const p = { kind, ctx, id };
+    p.done = v => {
+      if (pending !== p) return;
+      clearTimeout(p.timer);
+      pending = null;
+      selected = [];
+      $('#modal').hidden = true;
+      resolve(v);
+      render();
+    };
+    pending = p;
+    selected = [];
+    render();
+    if (MODALS[kind]) MODALS[kind](p);
+    if (kind === 'nope') p.timer = setTimeout(() => p.done(false), NOPE_MS);
+  });
+}
+
+// Same rules as Engine.canPlay, but from what this player can see.
+function legal(cards) {
+  const kind = playKind(cards);
+  if (!kind || !cards.every(id => V.hand.includes(id))) return false;
+  if (['favor', 'pair', 'triple'].includes(kind)) return V.players.some((p, i) => i !== V.you && p.alive && p.count > 0);
+  return true;
+}
+
+// ---- rendering ----
+
+function render() {
+  if (!V) return;
+  const live = V.players.filter(p => p.alive).length;
+  const n = V.players.length;
+  $('#risk').textContent = live > 1 && V.pile ? `${Math.round(((live - 1) / V.pile) * 100)}%` : '–';
+  $('#nerds').textContent = `${Math.max(live - 1, 0)} / ${V.pile}`;
+  $('#dir').textContent = V.dir === 1 ? '→' : '←';
+  $('#menu').textContent = t(mode === 'host' ? 'endGame' : mode === 'client' ? 'leave' : 'menu');
+  $('#autoBtn').classList.toggle('on', autoplay);
+  $('#opponents').innerHTML = Array.from({ length: n - 1 }, (_, k) => opponent((V.you + k + 1) % n)).join('');
+  $('#pileCount').textContent = V.pile;
+  $('#drawPile').classList.toggle('can', pending?.kind === 'move');
+  $('#discardTop').innerHTML = V.discard ? card(V.discard) : '<div class="slot"></div>';
+  $('#known').innerHTML = V.known.length ? `<span class="label">${t('knowTop')}</span><div class="mini">${V.known.map(id => card(id)).join('')}</div>` : '';
+  renderHand();
+  renderBar();
+}
+
+function opponent(i) {
+  const p = V.players[i];
+  const turn = V.cur === i && p.alive && V.winner == null;
+  const target = pending?.kind === 'target' && pending.ctx.options.includes(i);
+  const chips = [
+    turn ? `<span class="chip on">${V.turns > 1 ? t('turns', V.turns) : t('turn')}</span>` : '',
+    p.blind ? `<span class="chip">${t('cursed')}</span>` : '',
+    p.alive ? '' : `<span class="chip hot">${t('exploded')}</span>`,
+  ].join('');
+  return `<div class="opp${turn ? ' turn' : ''}${p.alive ? '' : ' out'}${target ? ' target' : ''}" data-i="${i}">
+    ${card(p.alive ? null : p.exploded)}
+    <div><div class="name">${esc(p.name)}</div><div class="label">${p.alive ? t('cards', p.count) : t('out')}</div><div class="chips">${chips}</div></div>
+  </div>`;
+}
+
+function renderHand() {
+  const me = V.players[V.you];
+  const hand = $('#hand');
+  hand.classList.toggle('live', pending?.kind === 'move' || pending?.kind === 'favor');
+  if (!me.alive) {
+    hand.innerHTML = `<div class="gone">${card(me.exploded)}${t('youExploded')}</div>`;
+    return;
+  }
+  hand.innerHTML = V.hand
+    .map(id => card(me.blind ? null : id, `${selected.includes(id) ? 'sel' : ''} ${id === lastDrawn ? 'new' : ''}`, `data-id="${id}"`))
+    .join('');
+  const n = V.hand.length;
+  const room = hand.clientWidth - 80;
+  hand.style.setProperty('--gap', `${n > 1 ? Math.min(8, (room - 120) / (n - 1) - 120) : 0}px`);
+}
+
+function renderBar() {
+  const me = V.players[V.you];
+  const p = pending;
+  const turns = V.turns > 1 && V.cur === V.you ? ` <span class="chip on">${t('turnsToTake', V.turns)}</span>` : '';
+  const status = text => `<span id="status">${esc(text)}${turns}</span>`;
+  let html = '';
+  if (!p) {
+    const cur = V.players[V.cur];
+    html = V.winner != null || !cur.alive ? ''
+      : V.cur !== V.you ? status(t('thinking', cur.name))
+      : autoplay ? status(t('autoOn')) : '';
+  } else if (p.kind === 'move' && me.blind) {
+    html = `${status(t('cursedBar'))}
+      <button class="btn" data-a="flip" ${V.hand.length ? '' : 'disabled'}>${t('flip')}</button>
+      <button class="btn primary" data-a="draw">${t('draw')}</button>`;
+  } else if (p.kind === 'move') {
+    const kind = selected.length ? playKind(selected) : null;
+    const ok = kind && legal(selected);
+    const label = !selected.length ? t('pickCard')
+      : !kind ? t('cantPlay')
+      : !ok ? t('noTarget')
+      : kind === 'pair' ? t('playPair')
+      : kind === 'triple' ? t('playTriple')
+      : t('play', cardName(kind));
+    html = `${status(t('yourTurn'))}
+      <button class="btn" data-a="play" ${ok ? '' : 'disabled'}>${label}</button>
+      <button class="btn primary" data-a="draw">${t('draw')}</button>`;
+  } else if (p.kind === 'target') {
+    html = status(t('target')[p.ctx.kind])
+      + p.ctx.options.map(i => `<button class="btn" data-target="${i}">${i === V.you ? t('yourself') : esc(V.players[i].name)}</button>`).join('')
+      + (p.ctx.cancelable ? `<button class="btn ghost" data-a="cancel">${t('cancel')}</button>` : '');
+  } else if (p.kind === 'nope') {
+    const { act, on } = p.ctx;
+    html = `${status(on ? t('played', S(act.p), describe(act)) : t('nopedQ', describe(act)))}
+      <button class="btn danger" data-a="nope">${t('nopeBtn')}</button>
+      <button class="btn" data-a="allow">${t('letGo')}</button>
+      <span class="timer"><i style="animation-duration:${NOPE_MS}ms"></i></span>`;
+  } else if (p.kind === 'favor') {
+    html = status(t('favorAsk', V.players[p.ctx.to].name));
+  }
+  $('#bar').innerHTML = html;
+}
+
+function describe(a) {
+  const first = nameOf(a.cards[0]);
+  const target = a.kind === 'attack' ? nextAlive(V, a.p) : a.target; // a plain Attack hits the next player still in
+  const who = target == null ? '' : t('obj', S(target), target === a.p);
+  if (a.kind === 'pair') return t('pairOf', first, who);
+  if (a.kind === 'triple') return t('threeOf', first, who, cardName(a.named));
+  return ['attack', 'targeted', 'favor', 'curse'].includes(a.kind) ? t('aimed', first, who) : first;
+}
+
+function stage(cards, caption, cls = '') {
+  $('#stage').innerHTML = `<div class="cards ${cls}">${cards.map(id => card(id)).join('')}</div><div class="cap"></div>`;
+  $('#stage .cap').textContent = caption;
+}
+
+function log(text, cls = '') {
+  const el = document.createElement('div');
+  el.className = cls;
+  el.textContent = text;
+  $('#log').append(el);
+  $('#log').scrollTop = $('#log').scrollHeight;
+}
+
+function flash() {
+  document.body.classList.remove('flash');
+  void document.body.offsetWidth; // restart the animation
+  document.body.classList.add('flash');
+}
+
+function openModal(html, wire) {
+  const m = $('#modal');
+  m.innerHTML = `<div class="box">${html}</div>`;
+  m.hidden = false;
+  wire(m.querySelector('.box'));
+}
+
+// Modal with buttons: [[labelKey, cssClass, onClick], ...]
+function choiceModal(html, buttons) {
+  openModal(`${html}<div class="row">${buttons.map(([k, cls], i) => `<button class="btn ${cls}" data-i="${i}">${t(k)}</button>`).join('')}</div>`, box => {
+    box.onclick = e => {
+      const b = e.target.closest('[data-i]');
+      if (b) buttons[+b.dataset.i][2]();
+    };
+  });
+}
+
+// ---- sound: synthesized with Web Audio, so there are no audio files ----
+
+let muted = store.get('mute') === '1';
+let ac = null;
+const audio = () => {
+  ac ||= new AudioContext();
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+};
+document.addEventListener('pointerdown', () => { try { audio(); } catch {} }, true); // audio may only start from a click
+
+function tone(freq, dur, { type = 'sine', vol = 0.2, at = 0, to = freq } = {}) {
+  const a = audio();
+  const t0 = a.currentTime + at;
+  const o = a.createOscillator();
+  const v = a.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t0);
+  o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+  v.gain.setValueAtTime(vol, t0);
+  v.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  o.connect(v).connect(a.destination);
+  o.start(t0);
+  o.stop(t0 + dur);
+}
+
+function noise(dur, { vol = 0.3, at = 0, freq = 1000, to = freq, q = 1, type = 'bandpass' } = {}) {
+  const a = audio();
+  const t0 = a.currentTime + at;
+  const buf = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = a.createBufferSource();
+  const f = a.createBiquadFilter();
+  const v = a.createGain();
+  src.buffer = buf;
+  f.type = type;
+  f.Q.value = q;
+  f.frequency.setValueAtTime(freq, t0);
+  f.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+  v.gain.setValueAtTime(vol, t0);
+  v.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  src.connect(f).connect(v).connect(a.destination);
+  src.start(t0);
+}
+
+const SFX = {
+  card: () => noise(0.09, { freq: 2600, q: 0.8, vol: 0.25 }),
+  shuffle: () => { for (let i = 0; i < 12; i++) noise(0.04, { at: i * 0.05, freq: 2500 + Math.random() * 2500, q: 1.5, vol: 0.2 }); },
+  whoosh: () => noise(0.4, { freq: 300, to: 3000, q: 2, vol: 0.35 }),
+  boom: () => { noise(1.3, { type: 'lowpass', freq: 1500, to: 50, q: 0.7, vol: 1 }); tone(110, 0.9, { to: 30, vol: 0.7 }); },
+  nope: () => { tone(220, 0.14, { type: 'square', vol: 0.1 }); tone(150, 0.25, { type: 'square', vol: 0.1, at: 0.15 }); },
+  alarm: () => { for (let i = 0; i < 3; i++) tone(900, 0.15, { type: 'sawtooth', to: 600, vol: 0.08, at: i * 0.2 }); },
+  defuse: () => { tone(520, 0.12); tone(780, 0.3, { at: 0.1 }); },
+  curse: () => tone(520, 0.7, { type: 'triangle', to: 110 }),
+  ding: () => tone(1320, 0.35, { vol: 0.1 }),
+  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.35, { type: 'triangle', at: i * 0.12 })),
+};
+
+function sfx(name) {
+  if (muted) return;
+  try { SFX[name](); } catch {} // sound is decoration: it must never stop the game
+}
+
+function paintSound() {
+  $('#soundBtn').textContent = muted ? '🔇' : '🔊';
+  $('#soundBtn').title = t('sound');
+}
+
+// ---- motion ----
+
+const seatEl = i => (i === V.you ? $('#hand') : $(`.opp[data-i="${i}"]`));
+
+// Flies a card between two elements. Waits on a timer, not the animation: a hidden window pauses
+// animations, and the game must not stall on one.
+function fly(from, to, id = null, ms = 450) {
+  const a = from?.getBoundingClientRect();
+  const b = to?.getBoundingClientRect();
+  if (!a?.width || !b?.width) return sleep(0);
+  const w = 110;
+  const box = document.createElement('div');
+  box.innerHTML = card(id, 'flyer');
+  const img = box.firstElementChild;
+  img.style.cssText = `left: ${a.x + a.width / 2 - w / 2}px; top: ${a.y + a.height / 2 - w * 0.68}px; width: ${w}px`;
+  document.body.append(img);
+  const dx = b.x + b.width / 2 - (a.x + a.width / 2);
+  const dy = b.y + b.height / 2 - (a.y + a.height / 2);
+  img.animate([{ transform: 'none' }, { transform: `translate(${dx}px, ${dy}px) rotate(${dx < 0 ? -18 : 18}deg) scale(.85)` }],
+    { duration: ms, easing: 'cubic-bezier(.3, .7, .4, 1)', fill: 'forwards' });
+  setTimeout(() => img.remove(), ms + 60);
+  return sleep(ms);
+}
+
+function burst(el, emoji = '💥') {
+  const r = el?.getBoundingClientRect();
+  if (!r?.width) return;
+  const b = document.createElement('span');
+  b.className = 'burst';
+  b.textContent = emoji;
+  b.style.left = `${r.x + r.width / 2}px`;
+  b.style.top = `${r.y + r.height / 2}px`;
+  document.body.append(b);
+  setTimeout(() => b.remove(), 900);
+  el.classList.remove('shake');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('shake');
+}
+
+// ---- what each engine event looks like (d is already redacted for this player) ----
+
+async function show(type, d) {
+  const mine = i => (i === V.you ? 'me' : '');
+  switch (type) {
+    case 'turn':
+      log(t('turnOf', S(d.p), d.turns), 'turn');
+      render();
+      if (d.p === V.you && !autoplay) sfx('ding');
+      return sleep(d.p === V.you ? 0 : 250);
+    case 'play':
+      lastAct = d;
+      sfx('card');
+      await fly($(`#hand [data-id="${d.cards[0]}"]`) || seatEl(d.p), $('#stage'), d.cards[0]);
+      stage(d.cards, t('played', S(d.p), describe(d)));
+      log(t('played', S(d.p), describe(d)), mine(d.p));
+      render();
+      return sleep(600);
+    case 'nope': {
+      const text = d.on ? t('yup', S(d.p)) : t('noped', S(d.p));
+      await fly(seatEl(d.p), $('#stage'), V.discard, 350);
+      stage([V.discard], text);
+      $('#stage').insertAdjacentHTML('beforeend', `<div class="stamp">${esc(t('nopeBtn'))}</div>`);
+      sfx('nope');
+      log(text, mine(d.p));
+      render();
+      return sleep(900);
+    }
+    case 'attacked':
+      log(t('attacked', S(d.p), d.turns), d.p === V.you ? 'bad' : '');
+      render();
+      sfx('whoosh');
+      await fly($('#stage'), seatEl(d.p), lastAct?.cards[0], 500); // throw the Attack at its victim…
+      sfx('boom');
+      burst(seatEl(d.p)); // …and blow it up
+      if (d.p === V.you) flash();
+      return sleep(600);
+    case 'draw': {
+      const bottom = d.from === 'bottom';
+      sfx('card');
+      await fly($('#drawPile'), seatEl(d.p), null, 380);
+      if (d.id) {
+        lastDrawn = d.id;
+        stage([d.id], t('drewYou', nameOf(d.id), bottom));
+        log(t('drewYou', nameOf(d.id), bottom), 'me');
+      } else {
+        log(t('drew', S(d.p), bottom));
+      }
+      render();
+      return sleep(d.id ? 700 : 200);
+    }
+    case 'exploding':
+      await fly($('#drawPile'), seatEl(d.p), null, 380);
+      stage([d.id], t('drewNerd', S(d.p)), 'shake');
+      sfx('alarm');
+      flash();
+      log(t('drewNerd', S(d.p)), 'bad');
+      render();
+      return sleep(1500);
+    case 'lost':
+      sfx('card');
+      stage([d.id], t('lost', S(d.p), nameOf(d.id)));
+      log(t('lost', S(d.p), nameOf(d.id)), mine(d.p));
+      render();
+      return sleep(900);
+    case 'defused':
+      stage([d.id], t('defused', S(d.p)), 'glow');
+      sfx('defuse');
+      log(t('defused', S(d.p)), mine(d.p));
+      render();
+      return sleep(1000);
+    case 'reinserted':
+      sfx('card');
+      await fly(seatEl(d.p), $('#drawPile'), null, 450);
+      log(d.pos != null ? t('putBackYou', t('where', d.pos, V.pile - 1)) : t('putBack', S(d.p)), mine(d.p));
+      render();
+      return sleep(500);
+    case 'boom': {
+      stage([d.id], t('boom', S(d.p)), 'shake');
+      flash();
+      log(t('boom', S(d.p)), 'bad');
+      render();
+      sfx('boom');
+      burst(seatEl(d.p));
+      await sleep(1600);
+      if (d.p !== V.you || V.players.filter(p => p.alive).length < 2) return undefined;
+      // Solo waits for the choice; on the network the game goes on behind the dialog.
+      const watched = new Promise(resolve => {
+        const watch = () => { $('#modal').hidden = true; resolve(); };
+        choiceModal(`<h2>${t('youExploded')}</h2><p>${t('loseTag')}</p><div class="cards">${card(V.players[V.you].exploded)}</div>`,
+          mode === 'solo' ? [['watch', '', watch], ['newGame', 'primary', startSolo]] : [['watch', 'primary', watch]]);
+      });
+      return mode === 'solo' ? watched : undefined;
+    }
+    case 'gave':
+    case 'stole': {
+      const what = d.id ? nameOf(d.id) : t('aCard');
+      sfx('card');
+      await fly(seatEl(d.from), seatEl(d.to), d.id);
+      if (d.id && d.to === V.you) lastDrawn = d.id;
+      log(type === 'gave' ? t('gave', S(d.from), S(d.to), what) : t('stole', S(d.to), S(d.from), what), d.id ? 'me' : '');
+      render();
+      return sleep(d.id ? 600 : 200);
+    }
+    case 'named': {
+      const nm = cardName(d.named);
+      sfx(d.id ? 'card' : 'nope');
+      if (d.id) await fly(seatEl(d.from), seatEl(d.to), d.id);
+      if (d.id && d.to === V.you) lastDrawn = d.id;
+      log(d.id ? t('handed', S(d.from), nm) : t('hadNone', S(d.from), nm), d.from === V.you || d.to === V.you ? 'me' : '');
+      render();
+      return sleep(800);
+    }
+    case 'cursed':
+      log(t('cursedLog', S(d.p)), d.p === V.you ? 'bad' : '');
+      render();
+      sfx('curse');
+      burst(seatEl(d.p), '🌀');
+      return sleep(600);
+    case 'shuffled': {
+      const pile = $('#drawPile');
+      pile.classList.remove('riffle');
+      void pile.offsetWidth; // restart the animation
+      pile.classList.add('riffle');
+      sfx('shuffle');
+      return sleep(650);
+    }
+    case 'win': {
+      render();
+      if (d.p === V.you) sfx('win');
+      log(t('wins', S(d.p)), 'bad');
+      const head = `<h2>${esc(t('wins', S(d.p)))}</h2><p>${t(d.p === V.you ? 'winTag' : 'loseTag')}</p>`;
+      if (mode === 'solo') choiceModal(head, [['again', 'primary', startSolo], ['menu', '', () => toMenu()]]);
+      else if (mode === 'host') choiceModal(head, [['toLobby', 'primary', backToLobby], ['stopHosting', '', () => toMenu()]]);
+      else choiceModal(`${head}<p class="hint">${t('waitNext')}</p>`, [['leave', '', () => toMenu()]]);
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+// ---- dialogs for private decisions ----
+
+const MODALS = {
+  future(p) {
+    openModal(`<h2>${cardName('future')}</h2><p>${t('futureText')}</p>
+      <div class="cards">${p.ctx.cards.map((id, i) => `<figure>${card(id)}<span class="label">${t('ord')[i]}</span></figure>`).join('')}</div>
+      <div class="row"><button class="btn primary" data-ok>${t('gotIt')}</button></div>`, box => {
+      box.querySelector('[data-ok]').onclick = () => p.done();
+    });
+  },
+  alter(p) {
+    const order = [...p.ctx.cards];
+    const paint = () => openModal(`<h2>${cardName('alter')}</h2><p>${t('alterText')}</p>
+      <div class="cards">${order.map((id, i) => `<figure>${card(id)}<figcaption>
+        <button class="btn sm" data-from="${i}" data-to="${i - 1}" ${i ? '' : 'disabled'}>◀</button>
+        <span class="label">${t('ord')[i]}</span>
+        <button class="btn sm" data-from="${i}" data-to="${i + 1}" ${i < order.length - 1 ? '' : 'disabled'}>▶</button>
+      </figcaption></figure>`).join('')}</div>
+      <div class="row"><button class="btn primary" data-ok>${t('done')}</button></div>`, box => {
+      box.onclick = e => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        if (b.dataset.ok != null) return p.done(order);
+        const i = +b.dataset.from;
+        const j = +b.dataset.to;
+        [order[i], order[j]] = [order[j], order[i]];
+        paint();
+      };
+    });
+    paint();
+  },
+  defuse(p) {
+    const n = p.ctx.size;
+    const spots = [0, Math.min(1, n), Math.floor(n / 2), 'random', n];
+    openModal(`<h2>${t('defusedTitle')}</h2><p>${t('defuseText', n)}</p>
+      <div class="cards">${card(V.players[V.you].exploded)}</div>
+      <input type="range" min="0" max="${n}" value="0" id="pos">
+      <div class="label" id="posLabel"></div>
+      <div class="row">${spots.map((s, i) => `<button class="btn" data-p="${s}">${t('spots')[i]}</button>`).join('')}</div>
+      <div class="row"><button class="btn primary" data-ok>${t('putItBack')}</button></div>`, box => {
+      const pos = box.querySelector('#pos');
+      const label = () => { box.querySelector('#posLabel').textContent = t('where', +pos.value, n); };
+      pos.oninput = label;
+      label();
+      box.onclick = e => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        if (b.dataset.ok != null) return p.done(+pos.value);
+        pos.value = b.dataset.p === 'random' ? Math.floor(Math.random() * (n + 1)) : b.dataset.p;
+        label();
+      };
+    });
+  },
+  name(p) {
+    const types = Object.keys(TYPES).filter(k => k !== 'exploding');
+    openModal(`<h2>${t('nameTitle')}</h2><p>${t('nameText')}</p>
+      <div class="names">${types.map(k => `<button class="btn" data-n="${k}">${cardName(k)}</button>`).join('')}</div>
+      <div class="row"><button class="btn ghost">${t('cancel')}</button></div>`, box => {
+      box.onclick = e => {
+        const b = e.target.closest('button');
+        if (b) p.done(b.dataset.n ?? null);
+      };
+    });
+  },
+};
+
+// ---- input ----
+
+$('#seats').onclick = e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  soloBots = +b.dataset.n;
+  for (const x of $('#seats').children) x.classList.toggle('on', x === b);
+};
+$('#fast').onchange = e => { fast = e.target.checked; };
+$('#name').value = store.get('name') || '';
+$('#name').oninput = () => {
+  store.set('name', $('#name').value);
+  $('#notice').textContent = '';
+};
+$('#deal').onclick = () => needName() || startSolo();
+$('#hostBtn').onclick = () => needName() || startHosting();
+$('#joinBtn').onclick = () => needName() || openJoin();
+$('#autoBtn').onclick = () => setAutoplay(!autoplay);
+$('#soundBtn').onclick = () => {
+  muted = !muted;
+  store.set('mute', muted ? '1' : '0');
+  paintSound();
+  sfx('ding');
+};
+for (const b of $$('[data-manual]')) b.onclick = openManual;
+$('#manualClose').onclick = () => { $('#manual').hidden = true; };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#manual').hidden = true; });
+$('#joinBack').onclick = () => toMenu();
+$('#ipJoin').onclick = () => joinServer($('#ip').value);
+$('#ip').onkeydown = e => e.key === 'Enter' && joinServer($('#ip').value);
+$('#serverList').onclick = e => {
+  const b = e.target.closest('[data-server]');
+  if (b) joinServer(`${servers[+b.dataset.server].ip}:${servers[+b.dataset.server].port}`);
+};
+$('#lobbyBox').onclick = e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.bots != null) {
+    lobbyBots = +b.dataset.bots;
+    renderLobby();
+    broadcastLobby();
+  } else if (b.dataset.act === 'start') hostStart();
+  else if (b.dataset.act === 'leave') toMenu();
+};
+$('#lobbyBox').onchange = e => { if (e.target.id === 'lobbyFast') fast = e.target.checked; };
+for (const b of $$('[data-lang]')) {
+  b.onclick = () => {
+    lang = b.dataset.lang;
+    store.set('lang', lang);
+    applyLang();
+  };
+}
+$('#menu').onclick = () => (mode === 'host' ? backToLobby() : toMenu());
+$('#drawPile').onclick = () => pending?.kind === 'move' && pending.done(null);
+$('#opponents').onclick = e => {
+  const el = e.target.closest('.opp.target');
+  if (el) pending.done(+el.dataset.i);
+};
+$('#bar').onclick = e => {
+  const b = e.target.closest('button');
+  if (!b || !pending) return;
+  if (b.dataset.target != null) return pending.done(+b.dataset.target);
+  const answers = { draw: null, cancel: null, flip: { blind: true }, nope: true, allow: false, play: { cards: [...selected] } };
+  pending.done(answers[b.dataset.a]);
+};
+$('#hand').onclick = e => {
+  const el = e.target.closest('[data-id]');
+  if (!el || !pending) return;
+  const id = +el.dataset.id;
+  if (pending.kind === 'favor') return pending.done(id);
+  if (pending.kind !== 'move' || V.players[V.you].blind) return;
+  if (selected.includes(id)) selected = selected.filter(x => x !== id);
+  else selected = playKind([...selected, id]) ? [...selected, id] : [id];
+  render();
+};
+$('#hand').ondblclick = e => {
+  const el = e.target.closest('[data-id]');
+  if (el && pending?.kind === 'move' && !V.players[V.you].blind && legal([+el.dataset.id])) pending.done({ cards: [+el.dataset.id] });
+};
+window.onresize = render;
+document.oncontextmenu = e => e.preventDefault();
+applyLang();
+if (!cleanName($('#name').value)) $('#name').focus();
+</script>
+</body>
+</html>
