@@ -9,7 +9,7 @@ jobs:
   build:
     # macOS: the Mac app needs swiftc and codesign, and the Electron script uses sips and BSD sed.
     runs-on: macos-latest
-    timeout-minutes: 30 # macOS minutes cost ~10x Linux ones; a hang shouldn't eat the month's allowance
+    timeout-minutes: 30
     permissions:
       contents: write # gh release create
     steps:
@@ -20,8 +20,8 @@ jobs:
       - run: node test.js
       - run: ./build.sh
       - run: ./electron/build.sh
-      # Pushes to main publish a release; PRs only build. A release, not artifacts: the three files are ~630 MB
-      # and the Free plan's artifact storage is 500 MB.
+      # Pushes to main publish a release; PRs only build. A release, not artifacts: artifacts expire, release files
+      # stay up as public downloads.
       - name: Release
         if: github.event_name == 'push'
         env:
