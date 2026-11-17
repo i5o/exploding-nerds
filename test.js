@@ -7,12 +7,13 @@ const quiet = g => ({ decide: async (pi, kind, ctx) => E.bot(g, pi, kind, ctx), 
 
 function allCards(g) {
   const ids = [...g.pile, ...g.discard, ...g.removed, ...g.players.flatMap(p => (p.exploded ? [...p.hand, p.exploded] : p.hand))];
-  assert.deepStrictEqual([...ids].sort((a, b) => a - b), Array.from({ length: 78 }, (_, i) => i + 1), 'every card exactly once');
+  const deck = Array.from({ length: 78 }, (_, i) => i + 1).concat(g.players.length > 5 ? [80] : []);
+  assert.deepStrictEqual([...ids].sort((a, b) => a - b), deck, 'every card exactly once');
 }
 
 (async () => {
   // Setup: 8 cards each incl. a Defuse, one Exploding Nerd fewer than players, extra Defuses per the rules.
-  for (let n = 2; n <= 5; n++) {
+  for (let n = 2; n <= 6; n++) {
     const g = E.newGame(names(n));
     allCards(g);
     for (const p of g.players) {
@@ -20,7 +21,7 @@ function allCards(g) {
       assert(p.hand.some(id => E.typeOf(id) === 'defuse'));
     }
     assert.strictEqual(g.pile.filter(id => E.typeOf(id) === 'exploding').length, n - 1);
-    assert.strictEqual(g.pile.length, 68 + (n === 5 ? 1 : 2) - 7 * n + n - 1);
+    assert.strictEqual(g.pile.length, 68 + Math.min(2, 6 - n) - 7 * n + n - 1);
   }
 
   // Attack stacking, straight from the Attack card's examples.
@@ -101,7 +102,7 @@ function allCards(g) {
   // Full games: cards are conserved after every event and exactly one player is left.
   const wins = {};
   for (let i = 0; i < 3000; i++) {
-    const n = 2 + (i % 4);
+    const n = 2 + (i % 5);
     const g = E.newGame(names(n), i % 3 === 0);
     let events = 0;
     const io = {

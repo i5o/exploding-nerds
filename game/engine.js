@@ -27,6 +27,10 @@ const Engine = (() => {
   };
   const TYPE_OF = [];
   for (const [t, [, first, n]] of Object.entries(TYPES)) for (let i = 0; i < n; i++) TYPE_OF[first + i] = t;
+  // Six players need a fifth Exploding Nerd (there's always one fewer than players) and the deck has four,
+  // so 6-player games add this one. cards/c80.webp is a copy of c01; c79 is the card back.
+  const EXTRA_NERD = 80;
+  TYPE_OF[EXTRA_NERD] = 'exploding';
   const typeOf = id => TYPE_OF[id];
   const nameOf = id => TYPES[typeOf(id)][0];
   const NERDS = ['brain', 'sticker', 'keyboard', 'duck', 'legacy'];
@@ -47,11 +51,12 @@ const Engine = (() => {
   function newGame(names, fast = false) {
     const n = names.length;
     const ids = Array.from({ length: 78 }, (_, i) => i + 1);
+    if (n > 5) ids.push(EXTRA_NERD);
     const nerds = ids.filter(id => typeOf(id) === 'exploding');
     const defuses = shuffle(ids.filter(id => typeOf(id) === 'defuse'));
     const pile = ids.filter(id => !['exploding', 'defuse'].includes(typeOf(id)));
     const players = names.map(name => ({ name, hand: [defuses.pop()], alive: true, blind: false, known: null, exploded: null }));
-    pile.push(...defuses.splice(0, n === 5 ? 1 : 2));
+    pile.push(...defuses.splice(0, 2)); // spare Defuses: 2, or what's left (1 with 5 players, none with 6)
     shuffle(pile);
     for (const p of players) p.hand.push(...pile.splice(0, 7));
     const removed = [...defuses];

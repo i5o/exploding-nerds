@@ -187,7 +187,7 @@
       <section class="mode">
         <h3 data-t="solo"></h3>
         <span class="label" data-t="opponents"></span>
-        <div class="seg" id="seats"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3" class="on">3</button><button data-n="4">4</button></div>
+        <div class="seg" id="seats"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3" class="on">3</button><button data-n="4">4</button><button data-n="5">5</button></div>
         <label class="check"><input type="checkbox" id="fast"><span data-t="fast"></span></label>
         <button class="btn primary" id="deal" data-t="deal"></button>
       </section>
@@ -266,8 +266,8 @@ const store = {
   set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
 };
 const PORT = 47800;
-const MAX_PLAYERS = 5;
-const BOTS = ['Senior Dev', 'DevOps', 'QA', 'Tech Lead'];
+const MAX_PLAYERS = 6;
+const BOTS = ['Senior Dev', 'DevOps', 'QA', 'Tech Lead', 'Intern'];
 const NOPE_MS = 5000;
 
 // ---- strings ----
@@ -742,7 +742,7 @@ function renderLobby() {
         ${lobby.map(c => `<li>${esc(c.name)}</li>`).join('')}
         ${BOTS.slice(0, lobbyBots).map(n => `<li>${esc(n)} <span class="label">bot</span></li>`).join('')}
       </ul>
-      <div class="row"><span class="label">${t('bots')}</span><div class="seg">${[0, 1, 2, 3, 4]
+      <div class="row"><span class="label">${t('bots')}</span><div class="seg">${[...Array(MAX_PLAYERS).keys()]
         .map(n => `<button data-bots="${n}" class="${n === lobbyBots ? 'on' : ''}" ${1 + lobby.length + n > MAX_PLAYERS ? 'disabled' : ''}>${n}</button>`)
         .join('')}</div></div>
       <div class="row"><label class="check"><input type="checkbox" id="lobbyFast" ${fast ? 'checked' : ''}>${t('fast')}</label></div>
