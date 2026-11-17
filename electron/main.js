@@ -1,4 +1,4 @@
-// Exploding Nerds for Windows: the game page in an Electron window, plus the LAN plumbing the Mac app does in Swift
+// Exploding Nerds for Windows and Linux: the game page in an Electron window, plus the LAN plumbing the Mac app does in Swift
 // (a WebSocket server on port 47800, Bonjour advertising and browsing). The page reaches it through
 // window.webkit.messageHandlers.net, the same bridge it uses in the Mac app (see preload.js).
 const { app, BrowserWindow, ipcMain } = require('electron');
@@ -156,7 +156,7 @@ const computerName = () => os.hostname().replace(/\.local$/, '');
 // an odd setup can still pick the wrong one, and players can type the right IP instead.
 function lanIP() {
   const score = a =>
-    (/^(en|eth|wlan|wi-?fi|ethernet)/i.test(a.name) ? 2 : 0) +
+    (/^(en|eth|wl|wi-?fi|ethernet)/i.test(a.name) ? 2 : 0) +
     (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a.address) ? 1 : 0) -
     (/vethernet|virtual|vmware|vbox|wsl|docker|hyper-v|tailscale|zerotier/i.test(a.name) ? 4 : 0);
   const all = Object.entries(os.networkInterfaces()).flatMap(([name, list]) => (list || []).map(a => ({ name, ...a })));
