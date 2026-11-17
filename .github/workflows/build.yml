@@ -1,0 +1,35 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    # macOS: the Mac app needs swiftc and codesign, and the Electron script uses sips and BSD sed.
+    runs-on: macos-latest
+    timeout-minutes: 30 # macOS minutes cost ~10x Linux ones; a hang shouldn't eat the month's allowance
+    permissions:
+      contents: write # gh release create
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node test.js
+      - run: ./build.sh
+      - run: ./electron/build.sh
+      # Pushes to main publish a release; PRs only build. A release, not artifacts: the three files are ~630 MB
+      # and the Free plan's artifact storage is 500 MB.
+      - name: Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHORT=$(git rev-parse --short HEAD)
+          gh release create "build-$SHORT" --target "$GITHUB_SHA" --title "Exploding Nerds ($SHORT)" \
+            --notes "ARM PCs: use the (ARM) folder. Linux on Ubuntu 24.04+: once, in its folder, run sudo chown root:root chrome-sandbox && sudo chmod 4755 chrome-sandbox (or start it with --no-sandbox)." \
+            "build/Exploding Nerds - Mac.zip#Exploding Nerds - Mac.zip" \
+            "build/Exploding Nerds - Windows.zip#Exploding Nerds - Windows.zip" \
+            "build/Exploding Nerds - Linux.tar.gz#Exploding Nerds - Linux.tar.gz"
