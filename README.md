@@ -3,7 +3,7 @@
 Dualboot Partners' card game (Software factory edition) as a desktop app for Mac, Windows and Linux. Play against bots
 or with friends on the same network, up to 6 players, in English or Spanish.
 
-<video src="demo.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/c9023639-ad1a-415b-83a7-c8511abf488e
 
 ## Download
 
