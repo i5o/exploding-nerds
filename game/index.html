@@ -931,6 +931,7 @@ function renderHand() {
   hand.innerHTML = V.hand
     .map(id => card(me.blind ? null : id, `${selected.includes(id) ? 'sel' : ''} ${id === lastDrawn ? 'new' : ''}`, `data-id="${id}"`))
     .join('');
+  lastDrawn = null; // pop once: every render() rebuilds the hand, which would replay the animation
   const n = V.hand.length;
   const room = hand.clientWidth - 80;
   hand.style.setProperty('--gap', `${n > 1 ? Math.min(8, (room - 120) / (n - 1) - 120) : 0}px`);
