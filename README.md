@@ -7,7 +7,8 @@ https://github.com/user-attachments/assets/c9023639-ad1a-415b-83a7-c8511abf488e
 
 ## Download
 
-Get the latest build from [Releases](https://github.com/i5o/exploding-nerds/releases/latest).
+Play in the browser at https://i5o.github.io/exploding-nerds/, nothing to install (against the computer only: network
+games need the app). Or get the latest build from [Releases](https://github.com/i5o/exploding-nerds/releases/latest).
 
 - **Mac** (macOS 14+, Apple Silicon or Intel): unzip and open `Exploding Nerds.app`. It isn't notarized, so macOS
   blocks the first launch: go to System Settings > Privacy & Security and click Open Anyway.
