@@ -34,3 +34,22 @@ jobs:
             "build/Exploding Nerds - Mac.zip#Exploding Nerds - Mac.zip" \
             "build/Exploding Nerds - Windows.zip#Exploding Nerds - Windows.zip" \
             "build/Exploding Nerds - Linux.tar.gz#Exploding Nerds - Linux.tar.gz"
+
+  # Pushes to main also put game/ on GitHub Pages: the browser version, solo only (a web page can't host a game).
+  pages:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: game
+      - id: deployment
+        uses: actions/deploy-pages@v5
