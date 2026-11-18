@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Not covered by the license above: the Exploding Nerds name, the card art
-(game/cards/), the Dualboot Partners logo (game/logo.svg), the rules manuals
-(game/manual-*.pdf) and the app icons built from the card art. These belong to
-Dualboot Partners, all rights reserved, and are used here with permission.
+(game/cards/), the Dualboot Partners logo and favicon (game/logo.svg,
+game/favicon.png), the rules manuals (game/manual-*.pdf) and the app icons built
+from the card art. These belong to Dualboot Partners, all rights reserved, and
+are used here with permission.
