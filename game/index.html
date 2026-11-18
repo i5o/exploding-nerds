@@ -48,6 +48,7 @@
   .notice { color: #ff8a70; font-weight: 600; min-height: 1.3em; margin: 10px 0 0; }
   .card { display: block; width: 120px; aspect-ratio: 616 / 840; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); }
   #langs { position: fixed; top: 22px; right: 26px; z-index: 5; }
+  .fork { position: fixed; right: -52px; bottom: 34px; width: 210px; padding: 7px 0; transform: rotate(-45deg); background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; text-align: center; text-decoration: none; box-shadow: 0 2px 10px rgba(0, 0, 0, .45); z-index: 5; }
   .screen { height: 100%; display: grid; place-items: center; }
 
   /* start screen */
@@ -209,6 +210,7 @@
     <p class="notice" id="notice"></p>
   </div>
   <div class="fan"><img class="card" src="cards/c79.webp" alt=""><img class="card" src="cards/c01.webp" alt=""><img class="card" src="cards/c05.webp" alt=""></div>
+  <a class="fork" id="fork" href="https://github.com/i5o/exploding-nerds" target="_blank" data-t="fork"></a>
 </div>
 
 <div id="lobby" class="screen" hidden><div class="box wide" id="lobbyBox"></div></div>
@@ -293,7 +295,7 @@ const L = {
     solo: 'Against the computer', opponents: 'Computer opponents', deal: 'Deal the cards',
     fast: 'Faster game: remove a third of the deck (best for 2–3 players)',
     lan: 'On the local network', host: 'Host a game', join: 'Join a game',
-    needApp: 'Hosting and finding games need the desktop app (Mac, Windows or Linux).',
+    needApp: 'Hosting and finding games need the desktop app (Mac, Windows or Linux).', fork: 'Fork me on GitHub',
     rules: 'Read the rules', rulesShort: 'Rules', close: 'Close', menu: 'Menu', endGame: 'End game',
     needName: 'Type your name first.', autoplay: 'Autoplay', autoOn: 'Autoplay is on: the computer plays for you.', sound: 'Sound',
     risk: 'Explosion risk', nerdsLeft: 'Nerds left', order: 'Play order', drawPile: 'Draw pile', discard: 'Discard',
@@ -368,7 +370,7 @@ const L = {
     solo: 'Contra la computadora', opponents: 'Rivales de la computadora', deal: 'Repartir',
     fast: 'Partida rápida: sacá un tercio del mazo (ideal para 2–3 jugadores)',
     lan: 'En la red local', host: 'Crear partida (ser servidor)', join: 'Unirse a una partida',
-    needApp: 'Para ser servidor o buscar partidas necesitás la app de escritorio (Mac, Windows o Linux).',
+    needApp: 'Para ser servidor o buscar partidas necesitás la app de escritorio (Mac, Windows o Linux).', fork: 'Forkeame en GitHub',
     rules: 'Leer el reglamento', rulesShort: 'Reglas', close: 'Cerrar', menu: 'Menú', endGame: 'Terminar partida',
     needName: 'Primero escribí tu nombre.', autoplay: 'Piloto automático', autoOn: 'Piloto automático: la computadora juega por vos.', sound: 'Sonido',
     risk: 'Riesgo de explosión', nerdsLeft: 'Nerds en el mazo', order: 'Sentido', drawPile: 'Mazo', discard: 'Descarte',
@@ -514,8 +516,7 @@ function applyLang() {
   for (const b of $$('[data-lang]')) b.classList.toggle('on', b.dataset.lang === lang);
   $('#name').placeholder = t('defaultName');
   $('#hostBtn').disabled = !native();
-  $('#appHint').hidden = !!native();
-  $('#downloads').hidden = !!native();
+  for (const s of ['#appHint', '#downloads', '#fork']) $(s).hidden = !!native();
   paintSound();
   if (mode === 'host' || mode === 'client') renderLobby();
   renderServers();
