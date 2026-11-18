@@ -472,6 +472,8 @@ let lastAct = null;    // last card play, so the Attack animation knows which ca
 const S = i => ({ you: i === V.you, name: V.players[i].name });
 const card = (id, cls = '', attrs = '') =>
   `<img class="card ${cls}" ${attrs} src="cards/c${id ? String(id).padStart(2, '0') : '79'}.webp" alt="${id ? esc(nameOf(id)) : ''}">`;
+// Load all 80 card pictures at start and keep them, so none is fetched mid-game on the web version.
+const cardCache = Array.from({ length: 80 }, (_, i) => Object.assign(new Image(), { src: `cards/c${String(i + 1).padStart(2, '0')}.webp` }));
 const cleanName = s => String(s ?? '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 20);
 const myName = () => cleanName($('#name').value) || t('defaultName');
 
